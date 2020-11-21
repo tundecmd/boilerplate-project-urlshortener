@@ -3,7 +3,7 @@ const express = require('express');
 const cors = require('cors');
 const app = express();
 const Url = require('./model/url-model');
-var bodyParser = require('body-parser');
+const bodyParser = require('body-parser');
 const mongoose = require('mongoose');
 
 // Basic Configuration
@@ -29,15 +29,8 @@ app.get('/', function(req, res) {
 app.get('/api/hello', function(req, res) {
   res.json({ greeting: 'hello API' });
 });
-
-// mongodb+srv://<username>:<password>@cluster0.82wyu.mongodb.net/<dbname>?retryWrites=true&w=majority
-
-// mongodb+srv://<username>:<password>@cluster0.82wyu.mongodb.net/<dbname>?retryWrites=true&w=majority
-
-// mongodb+srv://ademustexcel:<password>@cluster0.g5s4z.mongodb.net/<dbname>?retryWrites=true&w=majority
-
-//mongoose.connect(MONGO_URI)
 const connectionURL = 'mongodb://127.0.0.1:27017/url-shortener'
+
 // Setup your mongodb connection here
 mongoose.connect(connectionURL, {
 	useNewUrlParser: true,
@@ -47,27 +40,33 @@ mongoose.connect(connectionURL, {
 
 app.post('/api/shorturl/new', async (req, res) => {
   try {
-    //console.log(req.url);
-    const reqUrl = req.body.url
-    let url = await Url.findOne({
-      original_url: reqUrl
-    })
-    if (url) {
-      console.log('from old', url);
-      res.json(url)
-    } else {
-      url = new Url({
-        original_url: reqUrl,
-        short_url: `${reqUrl[8]}${reqUrl[9]}${reqUrl[reqUrl.length - 5]}${Math.floor(Math.random() * reqUrl.length)}`
+    const reqUrl = req.body.url;
+    console.log(reqUrl);
+    console.log(validator(reqUrl));
+    if (!validator(reqUrl)) {
+      res.json({
+        "error": "invalid url"
       })
-      url.save();
-      console.log('newurl: ', url);
-      res.json(url)
+      return
+    } else {
+      let url = await Url.findOne({
+        original_url: reqUrl
+      })
+      if (url) {
+        res.json(url)
+      } else {
+        url = new Url({
+          original_url: reqUrl,
+          short_url: `${reqUrl[8]}${reqUrl[9]}${reqUrl[reqUrl.length - 5]}${Math.floor(Math.random() * reqUrl.length)}`
+        })
+        url.save();
+        res.json(url)
+    }
+    
     }    
   } catch (e) {
     throw e
   }
-  
 })
 
 app.get('/api/shorturl/:short_url', async (req, res) => {
@@ -78,6 +77,12 @@ app.get('/api/shorturl/:short_url', async (req, res) => {
   console.log(url);
   res.redirect(`${url.original_url}`);
 })
+
+function validator(url) {
+  const pattern = /^https?:\/\/(?:www\.)?[-a-zA-Z0-9@:%._\+~#=]{1,256}\.[a-zA-Z0-9()]{1,6}\b([-a-zA-Z0-9()@:%_\+.~#?&//=]*)$/gim;
+  return pattern.test(url);
+}
+
 
 app.listen(port, function() {
   console.log(`Listening on port ${port}`);

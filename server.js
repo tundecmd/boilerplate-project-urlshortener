@@ -37,17 +37,15 @@ mongoose.connect(connectionURL, {
 	useUnifiedTopology: true
 })
 
-
 app.post('/api/shorturl/new', async (req, res) => {
   try {
     const reqUrl = req.body.url;
-    console.log(reqUrl);
-    console.log(validator(reqUrl));
+    console.log('43 ', reqUrl);
+    console.log('44', validator(reqUrl));
     if (!validator(reqUrl)) {
       res.json({
         "error": "invalid url"
       })
-      return
     } else {
       let url = await Url.findOne({
         original_url: reqUrl
